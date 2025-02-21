@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>WebGL Racing Game - Cars</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="score">Score: 0</div>
+    <div id="startScreen">
+      <div id="startMessage">Press any key to start</div>
+    </div>
+    <canvas id="game"></canvas>
+
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec3 position;
+      attribute vec3 normal;
+      attribute vec2 texcoord;
+      uniform mat4 modelViewMatrix;
+      uniform mat4 projectionMatrix;
+      uniform mat4 normalMatrix;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vTexcoord;
+      void main() {
+        vNormal = (normalMatrix * vec4(normal, 0.0)).xyz;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vPosition = mvPosition.xyz;
+        vTexcoord = texcoord;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    </script>
+
+    <!-- Fragment Shader -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vTexcoord;
+      uniform vec3 color;
+      uniform vec3 lightDir1;
+      uniform vec3 lightDir2;
+      uniform vec3 lightColor1;
+      uniform vec3 lightColor2;
+      uniform sampler2D texture;
+      uniform bool useTexture;
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 lightDirection1 = normalize(lightDir1);
+        vec3 lightDirection2 = normalize(lightDir2);
+        float ambientStrength1 = 0.3;
+        vec3 ambient1 = ambientStrength1 * lightColor1;
+        float diff1 = max(dot(normal, lightDirection1), 0.0);
+        vec3 diffuse1 = diff1 * lightColor1;
+        float ambientStrength2 = 0.1;
+        vec3 ambient2 = ambientStrength2 * lightColor2;
+        float diff2 = max(dot(normal, lightDirection2), 0.0);
+        vec3 diffuse2 = diff2 * lightColor2;
+        vec3 totalAmbient = ambient1 + ambient2;
+        vec3 totalDiffuse = diffuse1 + diffuse2;
+        vec3 finalColor;
+        if (useTexture) {
+          vec4 texColor = texture2D(texture, vTexcoord);
+          finalColor = (totalAmbient + totalDiffuse) * texColor.rgb;
+        } else {
+          finalColor = (totalAmbient + totalDiffuse) * color;
+        }
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    </script>
+
+    <script type="module" src="js/script.js"></script>
+  </body>
+</html>
